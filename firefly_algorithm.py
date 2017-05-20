@@ -11,6 +11,7 @@ class Firefly():
 		self.function = function_wrapper
 
 	def search(self):
+		bests = []
 		self._initialize_particles()
 		beta_inicial = 1
 		light_rate = random.random()
@@ -37,9 +38,9 @@ class Firefly():
 							new_location = self.__constrain_within_range(new_location, index)
 							particle_i.current_position[index] = new_location
 
-			print(self._select_best_firefly_by_fitness(self.population).fitness)
+			bests.append(self._select_best_firefly_by_fitness(self.population).fitness)
 
-		return {"best": self._select_best_firefly_by_fitness(self.population)}
+		return bests
 
 	def __constrain_within_range(self, new_location, index):
 		if new_location < self.function.lower_bound:
