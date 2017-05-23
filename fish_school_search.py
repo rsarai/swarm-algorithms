@@ -3,7 +3,7 @@ import functools
 import random
 import math
 
-from fish import Fish
+from particle import Fish
 from parameters import num_of_individuos, dimensions, iterations_number
 
 

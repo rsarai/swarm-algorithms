@@ -29,8 +29,13 @@ def main():
 	        soma[j] = new
 
 	soma = list(filter(lambda x: x/10000, soma))
-	plt.plot(soma)
-	plt.savefig('rosenbrocks.png')
+	file = open("fss-rosenbrocks.txt", "w")
+	for value in soma:
+		file.write("{}, ".format(value))
+		file.write("\n")
+	file.close()
+	# plt.plot(soma)
+	# plt.savefig('rosenbrocks.png')
 
 def sphere():
 	f = FSS(Sphere())
@@ -40,9 +45,20 @@ def sphere():
 		print(i)
 		r = f.search()
 		test.append(r)
+	soma = [0 for x in range(0,10000)]
+	for i in range(0, 30):
+	    for j in range(0, 10000):
+	        new = soma[j] + test[i][j]
+	        soma[j] = new
 
-	plt.boxplot(test, showfliers=False)
-	plt.savefig('boxplot-sphere.png')
+	soma = list(filter(lambda x: x/10000, soma))
+	file = open("fss-sphere.txt", "w")
+	for value in soma:
+		file.write("{}, ".format(value))
+		file.write("\n")
+	file.close()
+	# plt.boxplot(test, showfliers=False)
+	# plt.savefig('boxplot-sphere.png')
 
 def rastrigin():
 	f = FSS(Rastrigin())
@@ -52,8 +68,8 @@ def rastrigin():
 		print(i)
 		r = f.search()
 		test.append(r)
-	plt.subplot(211)
-	plt.boxplot(test, showfliers=False)
+	# plt.subplot(211)
+	# plt.boxplot(test, showfliers=False)
 
 	soma = [0 for x in range(0,10000)]
 	for i in range(0, 30):
@@ -62,9 +78,15 @@ def rastrigin():
 	        soma[j] = new
 
 	soma = list(filter(lambda x: x/10000, soma))
-	plt.subplot(212)
-	plt.plot(soma)
-	plt.savefig('fss-rastrigin.png')
+	# plt.subplot(212)
+	# plt.plot(soma)
+	# plt.savefig('fss-rastrigin.png')
+	file = open("fss-rastrigin.txt", "w")
+	for value in soma:
+		file.write("{}, ".format(value))
+		file.write("\n")
+	file.close()
 
 
 rastrigin()
+sphere()
