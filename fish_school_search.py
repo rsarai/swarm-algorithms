@@ -2,6 +2,7 @@ import copy
 import functools
 import random
 import math
+import numpy as np
 
 from particle import Fish
 from parameters import num_of_individuos, dimensions, iterations_number
@@ -69,7 +70,7 @@ class FSS():
             # calculates the baricenter
             weights_sum = 0
             for fish in  self.population:
-                weights_sum = fish.weights
+                weights_sum += fish.weights
 
             weights_sum_times_position = 0
             for fish in self.population:
@@ -80,7 +81,7 @@ class FSS():
 
             # executes volitive moviment
             for fish in self.population:
-                distance_to_baricenter = self._euclidian_distance(fish.current_position, baricenter)
+                distance_to_baricenter = np.linalg.norm([fish.current_position, baricenter])
 
                 volational_array = []
                 difference_to_baricenter = []
