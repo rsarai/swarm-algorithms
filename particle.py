@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 import random
+from parameters import dimensions, iterations_number
 
 
 class Particle():
@@ -35,35 +36,67 @@ class Fish():
         self.fitness = new_fitness
 
     def update_position_individual_movement(self, step_ind):
-        new_positions = [pos + step_ind * random.uniform(-1, 1) for pos in self.current_position]
+        new_positions = []
+        for pos in self.current_position:
+            new = pos + (step_ind * np.random.uniform(-1, 1))
+            if new > self.fitness_function.upper_bound:
+                new = self.fitness_function.upper_bound
+            elif new < self.fitness_function.lower_bound:
+                new = self.fitness_function.lower_bound
+            new_positions.append(new)
         assert len(new_positions) == len(self.current_position)
-        self.delta_position = [x - y for x, y in zip(self.current_position, new_positions)]
-        self.current_position = list(new_positions)
 
-        old_fitness = self.fitness
-        self.evaluate()
-        self.delta_fitness = old_fitness - self.fitness
+        new_fitness = self.fitness_function.calculate_fitness(new_positions)
+        if new_fitness < self.fitness:
+            self.delta_fitness = abs(new_fitness - self.fitness)
+            self.fitness = new_fitness
+            self.delta_position = [x - y for x, y in zip(new_positions, self.current_position)]
+            self.current_position = list(new_positions)
+        else:
+            self.delta_position = [0] * dimensions
+            self.delta_fitness = 0
 
     def feed(self, max_delta_fitness):
-        self.weight = self.weight + self.delta_fitness / max_delta_fitness
+        if max_delta_fitness < 1:
+            self.weight = 1
+        else:
+            self.weight = self.weight + (self.delta_fitness / max_delta_fitness)
+
+        if self.weight > (iterations_number / 2.0):
+            self.weight = iterations_number / 2.0
 
     def update_position_collective_movement(self, sum_delta_fitness):
-        collective_instinct = sum([pos * self.delta_fitness for pos in self.delta_position]) / sum_delta_fitness
-        import pdb; pdb.set_trace()
-        new_positions = [pos + collective_instinct for pos in self.current_position]
-        assert len(new_positions) == len(self.current_position)
+        collective_instinct = [pos * self.delta_fitness for pos in self.delta_position]
 
-        self.delta_position = [x - y for x, y in zip(self.current_position, new_positions)]
+        if sum_delta_fitness != 0:
+            collective_instinct = [val / sum_delta_fitness for val in collective_instinct]
+
+        new_positions = []
+        for pos, mov in zip(self.current_position, collective_instinct):
+            new = pos + mov
+            if new > self.fitness_function.upper_bound:
+                new = self.fitness_function.upper_bound
+            elif new < self.fitness_function.lower_bound:
+                new = self.fitness_function.lower_bound
+            new_positions.append(new)
+
+        assert len(new_positions) == len(self.current_position)
         self.current_position = list(new_positions)
 
     def update_position_volitive_movement(self, barycenter, step_vol, search_operator):
-        volitive_step = [x - y for x, y in zip(self.current_position,barycenter)] / np.linalg.norm([self.current_position, barycenter])
-        volitive_step = random.uniform(0.1, 0.9) * step_vol * volitive_step * search_operator
+        new_positions = []
+        for i, pos in enumerate(self.current_position):
+            new = pos + ((((pos - barycenter[i])/ np.linalg.norm([self.current_position, barycenter])) * step_vol * np.random.uniform(0, 1)) * search_operator)
+            if new > self.fitness_function.upper_bound:
+                new = self.fitness_function.upper_bound
+            elif new < self.fitness_function.lower_bound:
+                new = self.fitness_function.lower_bound
+            new_positions.append(new)
+        # volitive_step = [x - y for x, y in zip(self.current_position,barycenter)] / np.linalg.norm([self.current_position, barycenter])
+        # volitive_step = np.random.uniform(0, 1) * step_vol * volitive_step * search_operator
+        # new_positions = [x + y for x, y in zip(self.current_position, volitive_step)]
 
-        new_positions = [x + y for x, y in zip(self.current_position, volitive_step)]
         assert len(new_positions) == len(self.current_position)
-
-        self.delta_position = [x - y for x, y in zip(self.current_position, new_positions)]
         self.current_position = list(new_positions)
 
 

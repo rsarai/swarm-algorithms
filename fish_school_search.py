@@ -22,10 +22,10 @@ class FSS():
         # Params
         self.total_weight = 1 * self.num_of_individuos
         self.initial_step_ind = 1
-        self.final_step_ind = 0.01
+        self.final_step_ind = 0.0001
         self.step_ind = self.initial_step_ind
         self.initial_step_vol = 1
-        self.final_step_vol = 0.01
+        self.final_step_vol = 0.001
         self.step_vol = self.initial_step_vol
         self.list_global_best_values = []
 
@@ -48,8 +48,11 @@ class FSS():
             self.update_step(i)
             self.update_total_weight()
 
+            self.evaluate_cluster()
+            self.updates_optimal_solution()
+
             self.list_global_best_values.append(self.global_best)
-            print("iter: {} = cost: {}".format(i, self.global_best))
+            # print("iter: {} = cost: {}".format(i, self.global_best))
 
     def update_total_weight(self):
         self.total_weight = sum([fish.weight for fish in self.cluster])
@@ -69,10 +72,8 @@ class FSS():
 
     def updates_optimal_solution(self):
         for fish in self.cluster:
-            new_best = fish.fitness
-
-            if new_best < self.global_best:
-                self.global_best = new_best
+            if fish.fitness < self.global_best:
+                self.global_best = fish.fitness
                 self.global_best_position = list(fish.current_position)
 
     def apply_individual_movement(self):
@@ -104,8 +105,8 @@ class FSS():
             fish.update_position_volitive_movement(barycenter, self.step_vol, search_operator)
 
     def update_step(self, current_i):
-        self.step_ind -= (self.final_step_ind - self.initial_step_ind)/(current_i + 1)
-        self.step_vol -= (self.final_step_vol - self.initial_step_vol)/(current_i + 1)
+        self.step_ind = self.step_ind - current_i * float(self.final_step_ind - self.initial_step_ind)/iterations_number
+        self.step_vol = self.step_vol - current_i * float(self.final_step_vol - self.initial_step_vol)/iterations_number
 
     def _get_random_number(self):
-        return random.uniform(self.function.lower_bound, self.function.upper_bound)
+        return np.random.uniform(self.function.lower_bound, self.function.upper_bound)

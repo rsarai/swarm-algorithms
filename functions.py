@@ -36,7 +36,7 @@ class Rastrigin(AFunction):
 	def calculate_fitness(self, position_list):
 		solution = 0
 		for position in position_list:
-			solution += (position ** 2 + 10 - 10 * math.cos(2 * math.pi * position))
+			solution += (position ** 2 - 10 * math.cos(2 * math.pi * position) + 10)
 		return solution
 
 
