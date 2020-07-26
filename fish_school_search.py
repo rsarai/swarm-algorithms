@@ -1,4 +1,5 @@
 import copy
+import numpy as np
 import functools
 import random
 import math
@@ -9,117 +10,102 @@ from parameters import num_of_individuos, dimensions, iterations_number
 
 class FSS():
 
-    def __init__(self, function_wrapper):
-        self.function = function_wrapper
+    def __init__(self, objective_function):
+        self.function = objective_function
+        self.dimensions = dimensions
+        self.iterations_number = iterations_number
+        self.num_of_individuos = num_of_individuos
+        self.cluster = []
+        self.global_best = float('inf')
+        self.global_best_position = []
+
+        # Params
+        self.total_weight = 1 * self.num_of_individuos
+        self.initial_step_ind = 1
+        self.final_step_ind = 0.01
+        self.step_ind = self.initial_step_ind
+        self.initial_step_vol = 1
+        self.final_step_vol = 0.01
+        self.step_vol = self.initial_step_vol
+        self.list_global_best_values = []
 
     def search(self):
-        bests = []
-        maximum_weight_value = 1000
-        individual_step_dacay = 0.00005
-        self._initialize_particles()
+        self._initialize_cluster()
 
-        for iterations in range(iterations_number):
+        for i in range(self.iterations_number):
+            self.evaluate_cluster()
+            self.updates_optimal_solution()
 
-            # individual_movement
-            fitness_variations = []
-            for fish in self.population:
-                new_position = fish.individual_movement()
-                new_fish = Fish(fish.function_wrapper, new_position, fish.weights)
-                new_fish.aply_function_on_current_position()
-                fish.aply_function_on_current_position()
+            self.apply_individual_movement()
+            self.apply_feeding()
 
-                if new_fish.fitness < fish.fitness:
-                    new_fish.previous_position = fish.current_position
-                    fish = new_fish
-                else:
-                    fish.previous_position = fish.current_position
+            self.evaluate_cluster()
+            self.updates_optimal_solution()
 
-                fitness_variations.append(abs(new_fish.fitness - fish.fitness))
+            self.apply_instintive_collective_movement()
+            self.apply_collective_volitive_movement()
 
-            # feed fishes
-            max_variation = max(fitness_variations)
-            for fish in self.population:
-                new_weight = fish.weights + (fish.fitness / max_variation)
-                fish.previous_weight = fish.weights
-                fish.weights = new_weight
-                if fish.weights > maximum_weight_value:
-                    fish.weights = maximum_weight_value
+            self.update_step(i)
+            self.update_total_weight()
 
-            # calculates vector of instintict moviments
-            distance_variations_sum = [0 for i in range(0, dimensions)]
-            fitness_variations_sum = sum(fitness_variations)
-            for fish in self.population:
+            self.list_global_best_values.append(self.global_best)
+            print("iter: {} = cost: {}".format(i, self.global_best))
 
-                for i in range(0, dimensions):
-                    distance_variations = abs(fish.current_position[i] - fish.previous_position[i])
-                    distance_variations_sum[i] = distance_variations_sum[i] + (distance_variations * fitness_variations[i])
+    def update_total_weight(self):
+        self.total_weight = sum([fish.weight for fish in self.cluster])
 
-            instintive_movement_array = []
-            for i in range(0, dimensions):
-                if fitness_variations_sum != 0:
-                    instintive_movement_array.append(distance_variations_sum[i]/fitness_variations_sum)
-                else:
-                    instintive_movement_array.append(0)
+    def _initialize_cluster(self):
+        self.cluster = []
+        for _ in range(self.num_of_individuos):
+            fish = Fish(
+                positions=[self._get_random_number() for _ in range(dimensions)],
+                objective_function=self.function
+            )
+            self.cluster.append(fish)
 
-            # executes instintive moviments
-            for fish in self.population:
-                for i in range(0, dimensions):
-                    fish.current_position[i] = fish.current_position[i] + instintive_movement_array[i]
+    def evaluate_cluster(self):
+        for fish in self.cluster:
+            fish.evaluate()
 
-            # calculates the baricenter
-            weights_sum = 0
-            for fish in  self.population:
-                weights_sum = fish.weights
+    def updates_optimal_solution(self):
+        for fish in self.cluster:
+            new_best = fish.fitness
 
-            weights_sum_times_position = 0
-            for fish in self.population:
-                for i in range(0, dimensions):
-                    weights_sum_times_position = weights_sum_times_position + (fish.current_position[i] * fish.weights)
+            if new_best < self.global_best:
+                self.global_best = new_best
+                self.global_best_position = list(fish.current_position)
 
-            baricenter = [weights_sum_times_position / weights_sum for i in range(0, dimensions)]
+    def apply_individual_movement(self):
+        for fish in self.cluster:
+            fish.update_position_individual_movement(self.step_ind)
 
-            # executes volitive moviment
-            for fish in self.population:
-                distance_to_baricenter = self._euclidian_distance(fish.current_position, baricenter)
+    def apply_feeding(self):
+        max_delta_fitness = max([fish.delta_fitness for fish in self.cluster])
+        for fish in self.cluster:
+            fish.feed(max_delta_fitness)
 
-                volational_array = []
-                difference_to_baricenter = []
-                weight_variation_sum = 0
-                for i in range(0, dimensions):
-                    volational_array.append(2 * fish.current_position[i])
-                    difference_to_baricenter.append(fish.current_position[i] - baricenter[i])
-                    weight_variation_sum = weight_variation_sum + abs(fish.weights - fish.previous_weight)
+    def apply_instintive_collective_movement(self):
+        sum_delta_fitness = sum([fish.delta_fitness for fish in self.cluster])
 
-                sign = functools.partial(math.copysign, 1)
-                for i in range(0, dimensions):
-                    fish.current_position[i] = fish.current_position[i] + -sign(weight_variation_sum) * volational_array[i] * random.random() * difference_to_baricenter[i] / distance_to_baricenter
+        for fish in self.cluster:
+            fish.update_position_collective_movement(sum_delta_fitness)
 
-            for fish in self.population:
-                for i in range(0, dimensions):
-                    fish.current_position[i] -= individual_step_dacay
+    def _calculate_barycenter(self):
+        sum_weights = sum([fish.weight for fish in self.cluster])
+        sum_position_and_weights = [[x * fish.weight for x in fish.current_position] for fish in self.cluster]
+        sum_position_and_weights = np.sum(sum_position_and_weights, 0)
+        return [s / sum_weights for s in sum_position_and_weights]
 
-            for fish in self.population:
-                fish.aply_function_on_current_position()
+    def apply_collective_volitive_movement(self):
+        barycenter = self._calculate_barycenter()
+        current_total_weight = sum([fish.weight for fish in self.cluster])
+        search_operator = -1 if current_total_weight > self.total_weight else 1
+        for fish in self.cluster:
+            fish.update_position_volitive_movement(barycenter, self.step_vol, search_operator)
 
-            bests.append(min([fish.fitness for fish in self.population]))
-        return bests
-
-
-    def _initialize_particles(self):
-        self.population = []
-        for i in range(num_of_individuos):
-            random_position = [self._get_random_number() for index in range(dimensions)]
-            fish = Fish(self.function, random_position, random.uniform(300, 600))
-            self.population.append(fish)
-
-    def _euclidian_distance(self, particle_i, particle_j):
-        total = 0
-        for i in range(dimensions):
-            distance = (particle_i[i] - particle_j[i])**2
-            total += distance
-        return math.sqrt(total)
+    def update_step(self, current_i):
+        self.step_ind -= (self.final_step_ind - self.initial_step_ind)/(current_i + 1)
+        self.step_vol -= (self.final_step_vol - self.initial_step_vol)/(current_i + 1)
 
     def _get_random_number(self):
-        return (
-            self.function.lower_bound + random.uniform(0, 1) * (self.function.upper_bound - self.function.lower_bound)
-        )
+        return random.uniform(self.function.lower_bound, self.function.upper_bound)

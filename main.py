@@ -3,90 +3,74 @@ from fish_school_search import FSS
 from functions import Sphere, Rastrigin, Rosenbrocks
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib as mpl
+from parameters import iterations_number
 
+SIMULATIONS = 1
 
-def main():
-	# f = FSS(Rosenbrocks())
-	# test = []
-	# for i in range(3):
-	# 	r = f.search()
-	# 	test.append(r)
-	# plt.boxplot(test, showfliers=False)
-	# plt.show()
-
-	f = FSS(Rosenbrocks())
-	test = []
+def rosenbrocks():
 	print('Rosenbrocks')
-	for i in range(30):
-		print(i)
-		r = f.search()
-		test.append(r)
 
-	soma = [0 for x in range(0,10000)]
-	for i in range(0, 30):
-	    for j in range(0, 10000):
-	        new = soma[j] + test[i][j]
-	        soma[j] = new
+	best_fitness = []
+	for _ in range(SIMULATIONS):
+		fss = FSS(Rosenbrocks())
+		fss.search()
+		best_fitness.append(fss.list_global_best_values)
 
-	soma = list(filter(lambda x: x/10000, soma))
-	file = open("fss-rosenbrocks.txt", "w")
-	for value in soma:
-		file.write("{}, ".format(value))
-		file.write("\n")
-	file.close()
-	# plt.plot(soma)
-	# plt.savefig('rosenbrocks.png')
+	average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
+	plot_graphs(average_best_fitness, "Rosenbrocks")
+	plot_boxplot(best_fitness, "Rosenbrocks")
 
-def sphere():
-	f = FSS(Sphere())
-	test = []
-	print('Sphere')
-	for i in range(30):
-		print(i)
-		r = f.search()
-		test.append(r)
-	soma = [0 for x in range(0,10000)]
-	for i in range(0, 30):
-	    for j in range(0, 10000):
-	        new = soma[j] + test[i][j]
-	        soma[j] = new
 
-	soma = list(filter(lambda x: x/10000, soma))
-	file = open("fss-sphere.txt", "w")
-	for value in soma:
-		file.write("{}, ".format(value))
-		file.write("\n")
-	file.close()
-	# plt.boxplot(test, showfliers=False)
-	# plt.savefig('boxplot-sphere.png')
+def plot_boxplot(best_fitness, function_name):
+	fig1, ax1 = plt.subplots()
+	ax1.set_title(f'BoxPlot Best Fitness for {function_name}')
+	ax1.boxplot(best_fitness, patch_artist=True)
+	ax1.legend()
+	plt.savefig(f'FSS Boxplot {function_name}.png')
+
+
+def plot_graphs(average_best_fitness, function_name):
+
+    mpl.style.use('seaborn')
+
+    fig, ax = plt.subplots()
+    ax.plot(list(range(0, iterations_number)), average_best_fitness, 'b', label=f"Best: {average_best_fitness[-1]:.2f}")
+    ax.set_title(f"FSS {function_name}: Average {SIMULATIONS} runs")
+    ax.set_xlabel("Iterations")
+    ax.set_ylabel("Best Fitness")
+    ax.legend()
+    plt.savefig(f'FSS Convergence {function_name}.png')
+
 
 def rastrigin():
-	f = FSS(Rastrigin())
-	test = []
 	print('Rastrigin')
-	for i in range(30):
-		print(i)
-		r = f.search()
-		test.append(r)
-	# plt.subplot(211)
-	# plt.boxplot(test, showfliers=False)
 
-	soma = [0 for x in range(0,10000)]
-	for i in range(0, 30):
-	    for j in range(0, 10000):
-	        new = soma[j] + test[i][j]
-	        soma[j] = new
+	best_fitness = []
+	for _ in range(SIMULATIONS):
+		fss = FSS(Rastrigin())
+		fss.search()
+		best_fitness.append(fss.list_global_best_values)
 
-	soma = list(filter(lambda x: x/10000, soma))
-	# plt.subplot(212)
-	# plt.plot(soma)
-	# plt.savefig('fss-rastrigin.png')
-	file = open("fss-rastrigin.txt", "w")
-	for value in soma:
-		file.write("{}, ".format(value))
-		file.write("\n")
-	file.close()
+	average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
+	plot_graphs(average_best_fitness, "Rastrigin")
+	plot_boxplot(best_fitness, "Rastrigin")
 
 
+def sphere():
+	print('sphere')
+
+	best_fitness = []
+	for _ in range(SIMULATIONS):
+		fss = FSS(Sphere())
+		fss.search()
+		best_fitness.append(fss.list_global_best_values)
+
+	average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
+	plot_graphs(average_best_fitness, "Sphere")
+	plot_boxplot(best_fitness, "Sphere")
+
+
+# sphere()
+# rosenbrocks()
 rastrigin()
-sphere()
