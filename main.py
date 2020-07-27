@@ -27,7 +27,7 @@ def rosenbrocks():
 def plot_boxplot(best_fitness, function_name):
 	fig1, ax1 = plt.subplots()
 	ax1.set_title(f'BoxPlot Best Fitness for {function_name}')
-	ax1.boxplot(best_fitness, patch_artist=True)
+	ax1.boxplot(best_fitness, patch_artist=True, showfliers=False)
 	ax1.legend()
 	plt.savefig(f'FSS Boxplot {function_name}.png')
 
