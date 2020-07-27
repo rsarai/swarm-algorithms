@@ -8,6 +8,8 @@ from parameters import iterations_number
 
 SIMULATIONS = 1
 
+np.random.seed(42)
+
 def rosenbrocks():
 	print('Rosenbrocks')
 

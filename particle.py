@@ -3,6 +3,7 @@ import copy
 import random
 from parameters import dimensions, iterations_number
 
+np.random.seed(42)
 
 class Particle():
 
@@ -26,7 +27,7 @@ class Fish():
     def __init__(self, objective_function, positions):
         self.fitness_function = objective_function
         self.current_position = positions
-        self.weight = 1.0
+        self.weight = iterations_number / 2.0
         self.fitness = np.inf
         self.delta_fitness = 0
         self.delta_position = []
@@ -57,23 +58,21 @@ class Fish():
             self.delta_fitness = 0
 
     def feed(self, max_delta_fitness):
-        if max_delta_fitness < 1:
-            self.weight = 1
-        else:
+        if max_delta_fitness != 0:
             self.weight = self.weight + (self.delta_fitness / max_delta_fitness)
-
-        if self.weight > (iterations_number / 2.0):
-            self.weight = iterations_number / 2.0
+        else:
+            self.weight = 1
 
     def update_position_collective_movement(self, sum_delta_fitness):
-        collective_instinct = [pos * self.delta_fitness for pos in self.delta_position]
-
+        collective_instinct = []
+        for i, _ in enumerate(self.delta_position):
+            collective_instinct.append(self.delta_position[i] * self.delta_fitness)
         if sum_delta_fitness != 0:
             collective_instinct = [val / sum_delta_fitness for val in collective_instinct]
 
         new_positions = []
-        for pos, mov in zip(self.current_position, collective_instinct):
-            new = pos + mov
+        for i, _ in enumerate(self.current_position):
+            new = self.current_position[i] + collective_instinct[i]
             if new > self.fitness_function.upper_bound:
                 new = self.fitness_function.upper_bound
             elif new < self.fitness_function.lower_bound:
@@ -86,7 +85,7 @@ class Fish():
     def update_position_volitive_movement(self, barycenter, step_vol, search_operator):
         new_positions = []
         for i, pos in enumerate(self.current_position):
-            new = pos + ((((pos - barycenter[i])/ np.linalg.norm([self.current_position, barycenter])) * step_vol * np.random.uniform(0, 1)) * search_operator)
+            new = pos + (((pos - barycenter[i]) * step_vol * np.random.uniform(0, 1)) * search_operator)
             if new > self.fitness_function.upper_bound:
                 new = self.fitness_function.upper_bound
             elif new < self.fitness_function.lower_bound:

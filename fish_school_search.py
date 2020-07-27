@@ -7,6 +7,7 @@ import math
 from particle import Fish
 from parameters import num_of_individuos, dimensions, iterations_number
 
+np.random.seed(42)
 
 class FSS():
 
@@ -21,12 +22,12 @@ class FSS():
 
         # Params
         self.total_weight = 1 * self.num_of_individuos
-        self.initial_step_ind = 1
+        self.initial_step_ind = 0.1
         self.final_step_ind = 0.0001
-        self.step_ind = self.initial_step_ind
-        self.initial_step_vol = 1
+        self.step_ind = self.initial_step_ind * (objective_function.upper_bound - objective_function.lower_bound)
+        self.initial_step_vol = 0.01
         self.final_step_vol = 0.001
-        self.step_vol = self.initial_step_vol
+        self.step_vol = self.initial_step_vol * (objective_function.upper_bound - objective_function.lower_bound)
         self.list_global_best_values = []
 
     def search(self):
@@ -37,10 +38,10 @@ class FSS():
             self.updates_optimal_solution()
 
             self.apply_individual_movement()
-            self.apply_feeding()
-
             self.evaluate_cluster()
             self.updates_optimal_solution()
+
+            self.apply_feeding()
 
             self.apply_instintive_collective_movement()
             self.apply_collective_volitive_movement()
@@ -50,9 +51,8 @@ class FSS():
 
             self.evaluate_cluster()
             self.updates_optimal_solution()
-
             self.list_global_best_values.append(self.global_best)
-            # print("iter: {} = cost: {}".format(i, self.global_best))
+            print("iter: {} = cost: {}".format(i, self.global_best))
 
     def update_total_weight(self):
         self.total_weight = sum([fish.weight for fish in self.cluster])
@@ -105,8 +105,10 @@ class FSS():
             fish.update_position_volitive_movement(barycenter, self.step_vol, search_operator)
 
     def update_step(self, current_i):
-        self.step_ind = self.step_ind - current_i * float(self.final_step_ind - self.initial_step_ind)/iterations_number
-        self.step_vol = self.step_vol - current_i * float(self.final_step_vol - self.initial_step_vol)/iterations_number
+        self.step_ind = self.initial_step_ind - current_i * float(
+            self.initial_step_ind - self.final_step_ind) / iterations_number
+        self.step_vol = self.initial_step_vol - current_i * float(
+            self.initial_step_vol - self.final_step_vol) / iterations_number
 
     def _get_random_number(self):
         return np.random.uniform(self.function.lower_bound, self.function.upper_bound)
