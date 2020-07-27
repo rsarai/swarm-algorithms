@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib as mpl
 from parameters import iterations_number
 
-SIMULATIONS = 1
+SIMULATIONS = 30
 
-np.random.seed(42)
+# np.random.seed(42)
 
 def rosenbrocks():
 	print('Rosenbrocks')
@@ -74,5 +74,5 @@ def sphere():
 
 
 # sphere()
-# rosenbrocks()
+rosenbrocks()
 rastrigin()

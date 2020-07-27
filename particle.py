@@ -3,7 +3,7 @@ import copy
 import random
 from parameters import dimensions, iterations_number
 
-np.random.seed(42)
+# np.random.seed(42)
 
 class Particle():
 

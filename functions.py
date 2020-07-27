@@ -2,7 +2,7 @@ import math
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-np.random.seed(42)
+# np.random.seed(42)
 
 class AFunction:
     __metaclass__ = ABCMeta

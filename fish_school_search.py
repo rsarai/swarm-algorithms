@@ -7,7 +7,7 @@ import math
 from particle import Fish
 from parameters import num_of_individuos, dimensions, iterations_number
 
-np.random.seed(42)
+# np.random.seed(42)
 
 class FSS():
 
