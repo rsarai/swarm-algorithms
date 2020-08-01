@@ -75,4 +75,4 @@ def sphere():
 
 # sphere()
 rosenbrocks()
-rastrigin()
+# rastrigin()
