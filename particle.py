@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import random
 from parameters import dimensions, iterations_number
+from enum import Enum
 
 # np.random.seed(42)
 
@@ -99,10 +100,74 @@ class Fish():
         self.current_position = list(new_positions)
 
 
+class BeeJob(Enum):
+    EMPLOYED = 1
+    ONLOOKERS = 2
+    SCOUT = 3
+
+
 class Bee():
 
-    def __init__(self, function_wrapper, positions):
-        self.function_wrapper = function_wrapper
+    def __init__(self, objective_function, positions, bee_type):
+        self.objective_function = objective_function
         self.current_position = positions
-        self.best_particle = self.current_position
-        self.fitness = 1.0
+        self.fitness = float('inf')
+        self.bee_type = bee_type
+        self.dimensions = 30  # hardcoded, but should be dimensions
+        self.failures = 0
+
+    def evaluate(self):
+        self.fitness = self.objective_function.calculate_fitness(self.current_position)
+
+    def employed_bees_explore_new_food_source(self, update=True):
+        if self.bee_type != BeeJob.EMPLOYED:
+            return
+
+        if not update:
+            return
+
+        new_position = list(self.current_position)
+        position2change = random.randint(0, self.dimensions - 1)
+        random_index = self._get_random_number(position2change)
+        new_pos = self.current_position[position2change] + random.uniform(-1, 1) * (self.current_position[position2change] - self.current_position[random_index])
+        if new_pos > self.objective_function.upper_bound:
+            new_pos = self.objective_function.upper_bound
+
+        if new_pos < self.objective_function.lower_bound:
+            new_pos = self.objective_function.lower_bound
+
+        new_position[position2change] = new_pos
+        new_fitness = self.objective_function.calculate_fitness(new_position)
+        if self.fitness < new_fitness:
+            self.failures += 0
+            return
+
+        self.current_position = new_position
+        self.fitness = new_fitness
+
+    def set_new_food_source_for_onlooker_bee(self, source_position):
+        new_position = []
+        for i, pos in enumerate(source_position):
+            random_index = self._get_random_number(i)
+            new_pos = pos + random.uniform(-1, 1) * (pos - source_position[random_index])
+            if new_pos > self.objective_function.upper_bound:
+                new_pos = self.objective_function.upper_bound
+
+            if new_pos < self.objective_function.lower_bound:
+                new_pos = self.objective_function.lower_bound
+
+            new_position.append(new_pos)
+
+        self.current_position = new_position
+        self.fitness = self.objective_function.calculate_fitness(new_position)
+
+    def _get_random_number(self, excluded_index):
+        random_index = random.randint(0, self.dimensions - 1)
+
+        while random_index == excluded_index:
+            random_index = random.randint(0, self.dimensions - 1)
+
+        return random_index
+
+    def set_position(self, new_positions):
+        self.current_position = list(new_positions)
