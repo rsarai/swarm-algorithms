@@ -108,19 +108,20 @@ class BeeJob(Enum):
 
 class Bee():
 
-    def __init__(self, objective_function, positions, bee_type):
+    def __init__(self, objective_function, positions, bee_type, food_source):
         self.objective_function = objective_function
         self.current_position = positions
-        self.fitness = float('inf')
+        self.fitness = self._calculate_fitness(positions)
         self.bee_type = bee_type
         self.dimensions = 30  # hardcoded, but should be dimensions
         self.failures = 0
+        self.food_source = food_source
 
     def evaluate(self):
-        self.fitness = self.objective_function.calculate_fitness(self.current_position)
+        self.fitness = self._calculate_fitness(self.current_position)
 
     def employed_bees_explore_new_food_source(self, update=True):
-        if self.bee_type != BeeJob.EMPLOYED:
+        if self.bee_type == BeeJob.EMPLOYED:
             return
 
         if not update:
@@ -137,7 +138,7 @@ class Bee():
             new_pos = self.objective_function.lower_bound
 
         new_position[position2change] = new_pos
-        new_fitness = self.objective_function.calculate_fitness(new_position)
+        new_fitness = self._calculate_fitness(new_position)
         if self.fitness < new_fitness:
             self.failures += 0
             return
@@ -145,21 +146,28 @@ class Bee():
         self.current_position = new_position
         self.fitness = new_fitness
 
-    def set_new_food_source_for_onlooker_bee(self, source_position):
-        new_position = []
-        for i, pos in enumerate(source_position):
-            random_index = self._get_random_number(i)
-            new_pos = pos + random.uniform(-1, 1) * (pos - source_position[random_index])
-            if new_pos > self.objective_function.upper_bound:
-                new_pos = self.objective_function.upper_bound
+    def set_new_food_source_for_onlooker_bee(self, source_position, food_source):
+        new_position = list(self.current_position)
+        position2change = random.randint(0, self.dimensions - 1)
+        random_index = self._get_random_number(position2change)
+        new_pos = self.current_position[position2change] + random.uniform(-1, 1) * (self.current_position[position2change] - source_position[random_index])
+        if new_pos > self.objective_function.upper_bound:
+            new_pos = self.objective_function.upper_bound
 
-            if new_pos < self.objective_function.lower_bound:
-                new_pos = self.objective_function.lower_bound
+        if new_pos < self.objective_function.lower_bound:
+            new_pos = self.objective_function.lower_bound
 
-            new_position.append(new_pos)
+        new_position[position2change] = new_pos
+        new_fitness = self._calculate_fitness(new_position)
+        if self.fitness < new_fitness:
+            return
 
         self.current_position = new_position
-        self.fitness = self.objective_function.calculate_fitness(new_position)
+        self.food_source = food_source
+        self.fitness = new_fitness
+
+    def _calculate_fitness(self, new_position):
+        return self.objective_function.calculate_fitness(new_position)
 
     def _get_random_number(self, excluded_index):
         random_index = random.randint(0, self.dimensions - 1)
