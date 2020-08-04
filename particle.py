@@ -113,7 +113,7 @@ class Bee():
         self.current_position = positions
         self.fitness = self._calculate_fitness(positions)
         self.bee_type = bee_type
-        self.dimensions = 30  # hardcoded, but should be dimensions
+        self.dimensions = len(positions)
         self.failures = 0
         self.food_source = food_source
 

@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from numpy.random import choice
+import matplotlib.pyplot as plt
 
 from particle import BeeJob, Bee
 from functions import Rastrigin
@@ -81,7 +82,7 @@ class ABC:
 
     def onlooker_bees_exploration(self):
         for t in range(len(self.colony)//2):
-            bee = self.colony[t + 15]
+            bee = self.colony[t + self.population_size//2]
             if self.update_type.value == 1:
                 random_bee_index = random.randint(0, (self.dimensions/2) - 1)
                 lead_bee = self.colony[random_bee_index]
