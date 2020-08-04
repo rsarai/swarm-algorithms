@@ -120,11 +120,8 @@ class Bee():
     def evaluate(self):
         self.fitness = self._calculate_fitness(self.current_position)
 
-    def employed_bees_explore_new_food_source(self, update=True):
-        if self.bee_type == BeeJob.EMPLOYED:
-            return
-
-        if not update:
+    def employed_bees_explore_new_food_source(self):
+        if self.bee_type != BeeJob.EMPLOYED:
             return
 
         new_position = list(self.current_position)
@@ -140,7 +137,7 @@ class Bee():
         new_position[position2change] = new_pos
         new_fitness = self._calculate_fitness(new_position)
         if self.fitness < new_fitness:
-            self.failures += 0
+            self.failures += 1
             return
 
         self.current_position = new_position
