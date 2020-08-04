@@ -4,11 +4,16 @@ import numpy as np
 import matplotlib as mpl
 from parameters import iterations_number
 from abcolony import ABC
+from enum import Enum
 
 mpl.style.use('seaborn')
 
-
 SIMULATIONS = 30
+
+class POSITION_UPDATE(Enum):
+    TRADITIONAL = 1
+    FOOD_SOURCE = 2
+    PROBABILITY = 3
 
 
 def plot_boxplot(best_fitness, function_name):
@@ -30,13 +35,47 @@ def plot_graphs(average_best_fitness, function_name):
 
 
 print('Rastrigin')
+
+
 best_fitness = []
 
-for _ in range(SIMULATIONS):
-    abc = ABC()
+for j in range(SIMULATIONS):
+    abc = ABC(POSITION_UPDATE.TRADITIONAL)
     results = abc.search()
     best_fitness.append(results)
 
-plot_boxplot(best_fitness, "Rastrigin")
+plot_boxplot(best_fitness, "Rastrigin (Traditional)")
 average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
-plot_graphs(average_best_fitness, "Rastrigin")
+plot_graphs(average_best_fitness, "Rastrigin (Traditional)")
+with open("rastrigin_test_1.txt", "w") as f:
+    for i in average_best_fitness:
+        f.write(f"{str(i)}\n")
+
+
+best_fitness = []
+
+for _ in range(SIMULATIONS):
+    abc = ABC(POSITION_UPDATE.FOOD_SOURCE)
+    results = abc.search()
+    best_fitness.append(results)
+
+plot_boxplot(best_fitness, "Rastrigin (Food Source)")
+average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
+plot_graphs(average_best_fitness, "Rastrigin (Food Source)")
+with open("rastrigin_test_2.txt", "w") as f:
+    for i in average_best_fitness:
+        f.write(f"{str(i)}\n")
+
+
+best_fitness = []
+for _ in range(SIMULATIONS):
+    abc = ABC(POSITION_UPDATE.PROBABILITY)
+    results = abc.search()
+    best_fitness.append(results)
+
+plot_boxplot(best_fitness, "Rastrigin (Probability)")
+average_best_fitness = np.sum(np.array(best_fitness), axis=0) / SIMULATIONS
+plot_graphs(average_best_fitness, "Rastrigin (Probability)")
+with open("rastrigin_test_3.txt", "w") as f:
+    for i in average_best_fitness:
+        f.write(f"{str(i)}\n")
