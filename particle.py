@@ -1,10 +1,12 @@
 import numpy as np
+import random
 import copy
 import random
 from parameters import dimensions, iterations_number
 from enum import Enum
 
 # np.random.seed(42)
+# random.seed(42)
 
 class Particle():
 
@@ -176,3 +178,59 @@ class Bee():
 
     def set_position(self, new_positions):
         self.current_position = list(new_positions)
+
+
+class Ant():
+
+    def __init__(self, current_town):
+        self.current_town = current_town
+        self.tabu_list = [current_town]
+        self.pheromones_delta = []
+        self.total_cost = 0
+
+    def move_next_city_to_construct_tour(self, graph, alpha, beta):
+        assert len(self.tabu_list) == len(set(self.tabu_list))
+
+        denominator = 0
+        for j in range(len(graph.cities)):
+            if j in self.tabu_list:
+                continue
+
+            denominator += (
+                (graph.pheromones[self.current_town][j] ** alpha) *
+                ((1 / graph.distance_matrix[self.current_town][j]) ** beta)
+            )
+
+        probabilities = []
+        for j in range(len(graph.cities)):
+            if j in self.tabu_list:
+                probabilities.append(0)
+                continue
+            if denominator == 0:
+                probabilities.append(1 / len(graph.cities))
+            else:
+                probabilities.append(
+                    (
+                        (graph.pheromones[self.current_town][j] ** alpha) *
+                        ((1 / graph.distance_matrix[self.current_town][j]) ** beta)
+                    ) / denominator
+                )
+        next_town = random.choices(
+            population=list(range(0, len(graph.cities))),
+            weights=probabilities
+        )[0]
+        self.total_cost += graph.distance_matrix[self.current_town][next_town]
+        self.current_town = next_town
+        self.tabu_list.append(next_town)
+        assert len(self.tabu_list) == len(set(self.tabu_list))
+
+    def update_pheromone_trails(self, graph):
+        self.pheromones_delta = [[0 for _ in range(len(self.tabu_list))] for _ in range(len(self.tabu_list))]
+        for i in range(len(self.tabu_list) - 1):
+            step = self.tabu_list[i]
+            next_step = self.tabu_list[i + 1]
+            self.pheromones_delta[step][next_step] = 1 / graph.distance_matrix[step][next_step]
+            # self.pheromones_delta[step][next_step] = 1 / self.total_cost
+
+    def complet_tour_cost(self, graph):
+        self.total_cost += graph.distance_matrix[self.current_town][self.tabu_list[0]]

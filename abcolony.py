@@ -111,7 +111,6 @@ class ABC:
         probability_distribution = self.calculate_probabilities_for_onlookers(employer_bees)
 
         for bee in self.colony:
-            assert len(bee.current_position) == self.dimensions
             if bee.failures > self.fail_limit:
                 bee.current_position = self._get_random_positions()
                 onlookers = [b for b in self.colony if bee.food_source == b.food_source]
